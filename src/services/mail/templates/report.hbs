@@ -1,0 +1,48 @@
+<html lang='es'>
+  <body
+    style='font-family: "Roboto", sans-serif; margin: 0 auto; padding: 0; width: 100%; max-width: 700px; color: #000224;'
+  >
+    <table style='padding-top: 40px' cellpadding='0' cellspacing='0'>
+      <tr>
+        <td
+          style='color: #000224; font-size: 24px; font-weight: 700; line-height: 28px; border-bottom: 1px solid #e2e2e2; text-align: center;'
+        >
+          {{#if logo_url}}
+            <img
+              style='max-width: 151px; padding: 20px'
+              src='{{logo_url}}'
+              alt='logo'
+              draggable='false'
+            />
+          {{/if}}
+        </td>
+      </tr>
+      <tr align='center'>
+        <td>
+          <h3
+            style='font-size: 24px; font-weight: 700; line-height: 28px; color: #000224; margin-top: 24px; margin-bottom:24px'
+          >
+            {{#if title}}{{title}}{{else}}Reporte{{/if}}
+          </h3>
+        </td>
+      </tr>
+      <tr>
+        <td
+          style='color: #374151; font-family: "Roboto", sans-serif; font-size: 16px; font-style: normal; font-weight: 400; line-height: 24px;'
+        >
+          {{#if message}}{{message}}{{else}}Adjunto encontrará el archivo con el
+            detalle solicitado.{{/if}}
+        </td>
+      </tr>
+      <tr>
+        <td
+          align='center'
+          style='padding-top: 80px; padding-bottom: 40px; font-weight: 700; color: #000224; font-size: 16px;'
+        >
+          Copyright ©
+          {{year}}{{#if companyName}} {{companyName}}{{/if}}.
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

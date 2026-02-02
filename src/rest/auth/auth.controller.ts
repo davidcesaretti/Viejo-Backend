@@ -67,6 +67,18 @@ export class AuthController {
     return this.authService.login(user).then((r) => r.user);
   }
 
+  /**
+   * Token de corta duración para Socket.IO.
+   * Llamar con credentials: 'include' (cookie httpOnly); no guardar el token.
+   * Usar solo en el handshake del socket; tras recargar, pedir uno nuevo.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('socket-token')
+  getSocketToken(@CurrentUser() user: UserDocument) {
+    const token = this.authService.createSocketToken(user);
+    return { token };
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.Administrador)
   @Get('admin-only')

@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './rest/auth/auth.module';
 import { UsersModule } from './rest/users/users.module';
 import { AuditModule } from './rest/audit/audit.module';
+import { NotificationsModule } from './rest/notifications/notifications.module';
+import { MailModule } from './services/mail/mail.module';
 import { JwtAuthGuard } from './rest/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './rest/auth/guards/roles.guard';
 import { AuditInterceptor } from './rest/audit/audit.interceptor';
@@ -14,6 +17,11 @@ import { AuditInterceptor } from './rest/audit/audit.interceptor';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    EventEmitterModule.forRoot({
+      wildcard: false,
+      delimiter: '.',
+      maxListeners: 10,
+    }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
@@ -26,6 +34,8 @@ import { AuditInterceptor } from './rest/audit/audit.interceptor';
     AuthModule,
     UsersModule,
     AuditModule,
+    NotificationsModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

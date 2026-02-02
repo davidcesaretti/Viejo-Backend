@@ -82,6 +82,24 @@ export class AuthService {
     return 'access_token=; HttpOnly; Path=/; Max-Age=0';
   }
 
+  /**
+   * Genera un token de corta duración solo para Socket.IO.
+   * El frontend lo obtiene con la cookie httpOnly (credentials: include)
+   * y lo usa en el handshake del socket, sin guardarlo en localStorage.
+   */
+  createSocketToken(user: UserDocument): string {
+    const payload: JwtPayload = {
+      sub: user._id.toString(),
+      email: user.email,
+      roles: user.roles,
+    };
+    const expiresIn =
+      this.configService.get<number>('SOCKET_TOKEN_EXPIRES_IN') ?? 60;
+    return this.jwtService.sign(payload, {
+      expiresIn,
+    });
+  }
+
   private sanitizeUser(user: UserDocument): AuthResponse['user'] {
     return {
       id: user._id.toString(),
