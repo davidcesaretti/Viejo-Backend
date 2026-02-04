@@ -16,12 +16,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') ?? 'secret-change-in-prod',
-        signOptions: {
-          expiresIn: config.get<number>('JWT_EXPIRES_IN') ?? 604800, // 7 días en segundos
-        },
-      }),
+      useFactory: async (config: ConfigService) => {
+        const expiresIn = Number(config.get<string>('JWT_EXPIRES_IN')) || 14400; // 4 horas en segundos (env viene como string)
+        return {
+          secret: config.get<string>('JWT_SECRET') ?? 'secret-change-in-prod',
+          signOptions: { expiresIn },
+        };
+      },
       inject: [ConfigService],
     }),
   ],

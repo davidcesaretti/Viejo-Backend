@@ -9,6 +9,11 @@ import { AuthModule } from './rest/auth/auth.module';
 import { UsersModule } from './rest/users/users.module';
 import { AuditModule } from './rest/audit/audit.module';
 import { NotificationsModule } from './rest/notifications/notifications.module';
+import { ProductsModule } from './rest/products/products.module';
+import { StockModule } from './rest/stock/stock.module';
+import { ClientsModule } from './rest/clients/clients.module';
+import { SalesModule } from './rest/sales/sales.module';
+import { PaymentsModule } from './rest/payments/payments.module';
 import { MailModule } from './services/mail/mail.module';
 import { JwtAuthGuard } from './rest/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './rest/auth/guards/roles.guard';
@@ -35,6 +40,11 @@ import { AuditInterceptor } from './rest/audit/audit.interceptor';
     UsersModule,
     AuditModule,
     NotificationsModule,
+    ProductsModule,
+    StockModule,
+    ClientsModule,
+    SalesModule,
+    PaymentsModule,
     MailModule,
   ],
   controllers: [AppController],

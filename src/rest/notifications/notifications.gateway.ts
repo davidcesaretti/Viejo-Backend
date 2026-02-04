@@ -15,6 +15,12 @@ import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 const USER_ROOM_PREFIX = 'user:';
 
+interface SocketHandshake {
+  auth?: { token?: string };
+  query?: { token?: string; userId?: string };
+  headers?: { authorization?: string };
+}
+
 export interface AuthenticatedSocket extends Socket {
   userId?: string;
 }
@@ -55,11 +61,15 @@ export class NotificationsGateway
       this.configService.get<string>('JWT_SECRET') ?? 'secret-change-in-prod';
     server.use(async (socket: Socket, next) => {
       try {
-        const handshake = (socket as unknown as { handshake?: { auth?: { token?: string }; query?: { token?: string; userId?: string }; headers?: { authorization?: string } }).handshake;
+        const handshake = (socket as unknown as { handshake?: SocketHandshake })
+          .handshake;
         let token =
           handshake?.auth?.token ??
           (handshake?.query as { token?: string })?.token ??
-          (handshake?.headers?.authorization as string)?.replace?.('Bearer ', '');
+          (handshake?.headers?.authorization as string)?.replace?.(
+            'Bearer ',
+            '',
+          );
         const queryUserId = (handshake?.query as { userId?: string })?.userId;
 
         if (queryUserId && !token) {
@@ -97,7 +107,9 @@ export class NotificationsGateway
       ([, socketId]) => socketId === client.id,
     )?.[0];
     if (userId) this.userSockets.delete(userId);
-    this.logger.log(`Cliente desconectado: ${client.id}${userId ? `, userId: ${userId}` : ''}`);
+    this.logger.log(
+      `Cliente desconectado: ${client.id}${userId ? `, userId: ${userId}` : ''}`,
+    );
   }
 
   @OnEvent('user.notification')

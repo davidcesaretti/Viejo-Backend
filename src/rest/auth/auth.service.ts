@@ -74,7 +74,8 @@ export class AuthService {
 
   getCookieWithToken(token: string): string {
     const isProd = this.configService.get('NODE_ENV') === 'production';
-    const maxAge = 60 * 60 * 24 * 7; // 7 días en segundos
+    const maxAge =
+      Number(this.configService.get<string>('JWT_EXPIRES_IN')) || 14400; // mismo que el token (4 horas)
     return `access_token=${token}; HttpOnly; Path=/; Max-Age=${maxAge}${isProd ? '; Secure; SameSite=Strict' : ''}`;
   }
 
