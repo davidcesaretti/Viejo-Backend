@@ -4,6 +4,7 @@ import { Connection } from 'mongoose';
 import { SaleRepository } from '../../repositories/sale/sale.repository';
 import { StockRepository } from '../../repositories/stock/stock.repository';
 import { PaymentRepository } from '../../repositories/payment/payment.repository';
+import { CashboxRepository } from '../../repositories/cashbox/cashbox.repository';
 import type { SaleDocument } from '../../repositories/sale/sale.schema';
 import type { SaleListResult } from '../../repositories/sale/sale.repository';
 
@@ -38,6 +39,7 @@ export class SalesService {
     private readonly saleRepository: SaleRepository,
     private readonly stockRepository: StockRepository,
     private readonly paymentRepository: PaymentRepository,
+    private readonly cashboxRepository: CashboxRepository,
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
@@ -56,6 +58,7 @@ export class SalesService {
     }>;
     totalAmount: number;
     notes?: string;
+    createdBy: string;
     initialPayment?: {
       amount: number;
       paymentMethod?: string;
@@ -116,6 +119,13 @@ export class SalesService {
         sale._id.toString(),
         dto.initialPayment.amount,
       );
+      await this.cashboxRepository.create({
+        type: 'income',
+        category: 'cobro',
+        amount: dto.initialPayment.amount,
+        description: `Cobro inicial de venta ${sale._id.toString()}`,
+        createdBy: dto.createdBy,
+      });
       // Reload the sale with updated amountPaid
       sale = await this.saleRepository.findById(sale._id.toString());
     }

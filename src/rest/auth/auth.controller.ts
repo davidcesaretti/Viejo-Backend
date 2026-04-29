@@ -12,6 +12,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -61,6 +64,23 @@ export class AuthController {
     return { user: result.user, access_token: result.access_token };
   }
 
+  @Public()
+  @Post('forgot-password')
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.requestPasswordReset(dto.email);
+    return {
+      message:
+        'Si el email existe en el sistema, te enviamos un enlace de recuperación.',
+    };
+  }
+
+  @Public()
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto.token, dto.newPassword);
+    return { message: 'Contraseña actualizada correctamente' };
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async me(@CurrentUser() user: UserDocument) {
@@ -104,6 +124,20 @@ export class AuthController {
       })
       .catch(() => {});
     return { message: 'Sesión cerrada' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.authService.changePassword(
+      user._id.toString(),
+      dto.currentPassword,
+      dto.newPassword,
+    );
+    return { message: 'Contraseña actualizada correctamente' };
   }
 
   private setTokenCookie(res: Response, cookie: string | undefined): void {

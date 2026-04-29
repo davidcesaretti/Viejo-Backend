@@ -13,9 +13,11 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import type { UserDocument } from '../../repositories/user/user.schema';
 
 @Controller('payments')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -24,7 +26,7 @@ export class PaymentsController {
 
   @Post()
   @Roles(Role.Vendedor, Role.Administrador)
-  create(@Body() dto: CreatePaymentDto) {
+  create(@Body() dto: CreatePaymentDto, @CurrentUser() user: UserDocument) {
     return this.paymentsService.create({
       saleId: dto.saleId,
       clientId: dto.clientId,
@@ -33,6 +35,7 @@ export class PaymentsController {
       paymentMethod: dto.paymentMethod,
       items: dto.items,
       notes: dto.notes,
+      createdBy: user._id.toString(),
     });
   }
 

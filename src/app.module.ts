@@ -14,6 +14,7 @@ import { StockModule } from './rest/stock/stock.module';
 import { ClientsModule } from './rest/clients/clients.module';
 import { SalesModule } from './rest/sales/sales.module';
 import { PaymentsModule } from './rest/payments/payments.module';
+import { CashboxModule } from './rest/cashbox/cashbox.module';
 import { MailModule } from './services/mail/mail.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { JwtAuthGuard } from './rest/auth/guards/jwt-auth.guard';
@@ -46,6 +47,7 @@ import { AuditInterceptor } from './rest/audit/audit.interceptor';
     ClientsModule,
     SalesModule,
     PaymentsModule,
+    CashboxModule,
     MailModule,
     SchedulerModule,
   ],

@@ -62,4 +62,3 @@ export class Sale {
 export const SaleSchema = SchemaFactory.createForClass(Sale);
 
 SaleSchema.index({ clientId: 1, saleDate: -1 });
-SaleSchema.index({ clientId: 1 });

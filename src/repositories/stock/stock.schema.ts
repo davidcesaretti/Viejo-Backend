@@ -31,4 +31,3 @@ export class Stock {
 export const StockSchema = SchemaFactory.createForClass(Stock);
 
 StockSchema.index({ productId: 1, createdAt: -1 });
-StockSchema.index({ productId: 1 });

@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UserRepositoryModule } from '../../repositories/user/user.module';
 import { AuditModule } from '../audit/audit.module';
+import { MailModule } from '../../services/mail/mail.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -13,6 +14,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
   imports: [
     UserRepositoryModule,
     AuditModule,
+    MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

@@ -10,9 +10,11 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { SalesService } from './sales.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
+import type { UserDocument } from '../../repositories/user/user.schema';
 
 @Controller('sales')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -21,13 +23,14 @@ export class SalesController {
 
   @Post()
   @Roles(Role.Vendedor, Role.Administrador)
-  create(@Body() dto: CreateSaleDto) {
+  create(@Body() dto: CreateSaleDto, @CurrentUser() user: UserDocument) {
     return this.salesService.create({
       clientId: dto.clientId,
       saleDate: dto.saleDate,
       items: dto.items,
       totalAmount: dto.totalAmount,
       notes: dto.notes,
+      createdBy: user._id.toString(),
       initialPayment: dto.initialPayment
         ? {
             amount: dto.initialPayment.amount,

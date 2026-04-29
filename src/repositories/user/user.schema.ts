@@ -17,8 +17,15 @@ export class User {
 
   @Prop({ type: [String], enum: Role, default: [Role.Vendedor] })
   roles: Role[];
+
+  @Prop({ default: false })
+  banned: boolean;
+
+  @Prop()
+  resetPasswordTokenHash?: string;
+
+  @Prop()
+  resetPasswordExpiresAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
-UserSchema.index({ email: 1 });

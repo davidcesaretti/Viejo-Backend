@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PaymentRepository } from '../../repositories/payment/payment.repository';
 import { SaleRepository } from '../../repositories/sale/sale.repository';
+import { CashboxRepository } from '../../repositories/cashbox/cashbox.repository';
 import type { PaymentDocument } from '../../repositories/payment/payment.schema';
 import type { PaymentListResult } from '../../repositories/payment/payment.repository';
 
@@ -29,6 +30,7 @@ export class PaymentsService {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     private readonly saleRepository: SaleRepository,
+    private readonly cashboxRepository: CashboxRepository,
   ) {}
 
   async create(dto: {
@@ -39,6 +41,7 @@ export class PaymentsService {
     paymentMethod?: string;
     items?: Array<{ productId: string; stockId: string; productName: string; amount: number }>;
     notes?: string;
+    createdBy: string;
   }): Promise<PaymentResponse> {
     const sale = await this.saleRepository.findById(dto.saleId);
     const balance = sale.totalAmount - sale.amountPaid;
@@ -58,6 +61,15 @@ export class PaymentsService {
       notes: dto.notes,
     });
     await this.saleRepository.addPayment(dto.saleId, dto.amount);
+    await this.cashboxRepository.create({
+      type: 'income',
+      category: 'cobro',
+      amount: dto.amount,
+      description: `Cobro automático de venta ${dto.saleId}`,
+      entryDate: paymentDate,
+      createdBy: dto.createdBy,
+      paymentId: payment._id.toString(),
+    });
     return this.toResponse(payment);
   }
 
@@ -65,6 +77,7 @@ export class PaymentsService {
     const payment = await this.paymentRepository.findById(id);
     await this.saleRepository.addPayment(String(payment.saleId), -payment.amount);
     await this.paymentRepository.delete(id);
+    await this.cashboxRepository.deleteByPaymentId(id);
   }
 
   async findOne(id: string): Promise<PaymentResponse> {

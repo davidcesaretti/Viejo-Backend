@@ -17,6 +17,12 @@ export interface CreateUserData {
 
 export interface UpdateUserData {
   name?: string;
+  email?: string;
+  roles?: Role[];
+  banned?: boolean;
+  password?: string;
+  resetPasswordTokenHash?: string;
+  resetPasswordExpiresAt?: Date | null;
 }
 
 @Injectable()
@@ -38,6 +44,15 @@ export class UserRepository {
     return this.userModel.findOne({ email }).exec();
   }
 
+  async findByResetTokenHash(tokenHash: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findOne({
+        resetPasswordTokenHash: tokenHash,
+        resetPasswordExpiresAt: { $gt: new Date() },
+      })
+      .exec();
+  }
+
   async findById(id: string): Promise<UserDocument> {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
@@ -47,16 +62,35 @@ export class UserRepository {
   }
 
   async findAll(): Promise<UserDocument[]> {
-    return this.userModel.find().exec();
+    return this.userModel.find().sort({ createdAt: -1 }).exec();
   }
 
-  async update(id: string, data: UpdateUserData): Promise<UserDocument> {
+  /** Actualización parcial usada internamente (solo name). */
+  async update(id: string, data: { name?: string }): Promise<UserDocument> {
     const user = await this.userModel
       .findByIdAndUpdate(id, { $set: data }, { new: true })
       .exec();
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
+    if (!user) throw new NotFoundException('Usuario no encontrado');
     return user;
+  }
+
+  /** Actualización completa para administración (name, email, roles, banned, password). */
+  async updateFull(id: string, data: UpdateUserData): Promise<UserDocument> {
+    if (data.email) {
+      const existing = await this.userModel
+        .findOne({ email: data.email, _id: { $ne: id } })
+        .exec();
+      if (existing) throw new ConflictException('Ya existe un usuario con ese email');
+    }
+    const user = await this.userModel
+      .findByIdAndUpdate(id, { $set: data }, { new: true })
+      .exec();
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    return user;
+  }
+
+  async delete(id: string): Promise<void> {
+    const result = await this.userModel.findByIdAndDelete(id).exec();
+    if (!result) throw new NotFoundException('Usuario no encontrado');
   }
 }

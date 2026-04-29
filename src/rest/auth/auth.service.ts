@@ -1,12 +1,14 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import type { UserDocument } from '../../repositories/user/user.schema';
 import { UserRepository } from '../../repositories/user/user.repository';
 import { RegisterDto } from './dto/register.dto';
 import type { JwtPayload } from './interfaces/jwt-payload.interface';
 import { Role } from '../../common/enums/role.enum';
+import { MailService } from '../../services/mail/mail.service';
 
 export interface AuthResponse {
   user: {
@@ -25,6 +27,7 @@ export class AuthService {
     private userRepository: UserRepository,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private mailService: MailService,
   ) {}
 
   async validateUser(
@@ -33,13 +36,16 @@ export class AuthService {
   ): Promise<UserDocument | null> {
     const user = await this.userRepository.findByEmail(email);
     if (!user?.password) return null;
+    if (user.banned) return null;
     const valid = await bcrypt.compare(password, user.password);
     return valid ? user : null;
   }
 
   async findById(id: string): Promise<UserDocument | null> {
     try {
-      return await this.userRepository.findById(id);
+      const user = await this.userRepository.findById(id);
+      if (user.banned) return null;
+      return user;
     } catch {
       return null;
     }
@@ -70,6 +76,71 @@ export class AuthService {
       roles,
     });
     return this.login(user);
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user.password) {
+      throw new BadRequestException('El usuario no tiene contraseña local');
+    }
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      throw new BadRequestException('La contraseña actual es incorrecta');
+    }
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.userRepository.updateFull(userId, { password: hashed });
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) return;
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
+
+    await this.userRepository.updateFull(user._id.toString(), {
+      resetPasswordTokenHash: tokenHash,
+      resetPasswordExpiresAt: expiresAt,
+    });
+
+    const frontend =
+      this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
+    const resetUrl = `${frontend.replace(/\/$/, '')}/reset-password?token=${token}`;
+    await this.mailService.sendMail({
+      to: user.email,
+      subject: 'Recuperación de contraseña',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #111827;">
+          <h2 style="margin-bottom: 8px;">Recuperación de contraseña</h2>
+          <p style="margin-top: 0;">Hacé clic en el siguiente botón para crear una nueva contraseña:</p>
+          <p>
+            <a href="${resetUrl}" style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;">
+              Restablecer contraseña
+            </a>
+          </p>
+          <p style="font-size: 13px; color: #6b7280;">Este enlace vence en 30 minutos.</p>
+        </div>
+      `,
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await this.userRepository.findByResetTokenHash(tokenHash);
+    if (!user) {
+      throw new BadRequestException('El token de recuperación es inválido o expiró');
+    }
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.userRepository.updateFull(user._id.toString(), {
+      password: hashed,
+      resetPasswordTokenHash: undefined,
+      resetPasswordExpiresAt: null,
+    });
   }
 
   getCookieWithToken(token: string): string {
