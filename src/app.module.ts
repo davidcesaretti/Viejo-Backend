@@ -15,6 +15,7 @@ import { ClientsModule } from './rest/clients/clients.module';
 import { SalesModule } from './rest/sales/sales.module';
 import { PaymentsModule } from './rest/payments/payments.module';
 import { MailModule } from './services/mail/mail.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 import { JwtAuthGuard } from './rest/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './rest/auth/guards/roles.guard';
 import { AuditInterceptor } from './rest/audit/audit.interceptor';
@@ -46,6 +47,7 @@ import { AuditInterceptor } from './rest/audit/audit.interceptor';
     SalesModule,
     PaymentsModule,
     MailModule,
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [

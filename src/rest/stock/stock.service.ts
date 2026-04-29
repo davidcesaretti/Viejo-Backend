@@ -13,6 +13,7 @@ export interface StockResponse {
   quantity: number;
   price: number;
   discount: number;
+  variantName: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,6 +27,7 @@ export class StockService {
     quantity: number;
     price: number;
     discount?: number;
+    variantName?: string;
   }): Promise<StockResponse> {
     const stock = await this.stockRepository.create(dto);
     return this.toResponse(stock);
@@ -34,8 +36,13 @@ export class StockService {
   async findAll(
     page: number,
     limit: number,
+    onlyAvailable = false,
   ): Promise<Omit<StockListResult, 'items'> & { items: StockResponse[] }> {
-    const result = await this.stockRepository.findAll(page, limit);
+    const result = await this.stockRepository.findAll(
+      page,
+      limit,
+      onlyAvailable,
+    );
     return {
       ...result,
       items: result.items.map((item) => this.toResponse(item)),
@@ -46,11 +53,13 @@ export class StockService {
     productId: string,
     page: number,
     limit: number,
+    onlyAvailable = false,
   ): Promise<Omit<StockListResult, 'items'> & { items: StockResponse[] }> {
     const result = await this.stockRepository.findByProductId(
       productId,
       page,
       limit,
+      onlyAvailable,
     );
     return {
       ...result,
@@ -65,7 +74,7 @@ export class StockService {
 
   async update(
     id: string,
-    dto: { quantity?: number; price?: number; discount?: number },
+    dto: { quantity?: number; price?: number; discount?: number; variantName?: string },
   ): Promise<StockResponse> {
     const stock = await this.stockRepository.update(id, dto);
     return this.toResponse(stock);
@@ -106,6 +115,7 @@ export class StockService {
       quantity: stock.quantity,
       price: stock.price,
       discount: stock.discount ?? 0,
+      variantName: stock.variantName ?? '',
       createdAt:
         createdAt instanceof Date
           ? createdAt.toISOString()

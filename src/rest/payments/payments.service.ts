@@ -4,12 +4,21 @@ import { SaleRepository } from '../../repositories/sale/sale.repository';
 import type { PaymentDocument } from '../../repositories/payment/payment.schema';
 import type { PaymentListResult } from '../../repositories/payment/payment.repository';
 
+export interface PaymentItemResponse {
+  productId: string;
+  stockId: string;
+  productName: string;
+  amount: number;
+}
+
 export interface PaymentResponse {
   id: string;
   saleId: string;
   clientId: string;
   amount: number;
   paymentDate: string;
+  paymentMethod: string;
+  items: PaymentItemResponse[];
   notes: string;
   createdAt: string;
   updatedAt: string;
@@ -27,6 +36,8 @@ export class PaymentsService {
     clientId: string;
     amount: number;
     paymentDate?: string;
+    paymentMethod?: string;
+    items?: Array<{ productId: string; stockId: string; productName: string; amount: number }>;
     notes?: string;
   }): Promise<PaymentResponse> {
     const sale = await this.saleRepository.findById(dto.saleId);
@@ -42,10 +53,18 @@ export class PaymentsService {
       clientId: dto.clientId,
       amount: dto.amount,
       paymentDate,
+      paymentMethod: dto.paymentMethod ?? 'cash',
+      items: dto.items,
       notes: dto.notes,
     });
     await this.saleRepository.addPayment(dto.saleId, dto.amount);
     return this.toResponse(payment);
+  }
+
+  async delete(id: string): Promise<void> {
+    const payment = await this.paymentRepository.findById(id);
+    await this.saleRepository.addPayment(String(payment.saleId), -payment.amount);
+    await this.paymentRepository.delete(id);
   }
 
   async findOne(id: string): Promise<PaymentResponse> {
@@ -87,6 +106,13 @@ export class PaymentsService {
         paymentDate instanceof Date
           ? paymentDate.toISOString()
           : new Date().toISOString(),
+      paymentMethod: payment.paymentMethod ?? 'cash',
+      items: (payment.items ?? []).map((it) => ({
+        productId: String(it.productId),
+        stockId: String(it.stockId),
+        productName: it.productName,
+        amount: it.amount,
+      })),
       notes: payment.notes ?? '',
       createdAt:
         createdAt instanceof Date

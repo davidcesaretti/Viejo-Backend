@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Query,
@@ -27,8 +30,17 @@ export class PaymentsController {
       clientId: dto.clientId,
       amount: dto.amount,
       paymentDate: dto.paymentDate,
+      paymentMethod: dto.paymentMethod,
+      items: dto.items,
       notes: dto.notes,
     });
+  }
+
+  @Delete(':id')
+  @Roles(Role.Vendedor, Role.Administrador)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string) {
+    return this.paymentsService.delete(id);
   }
 
   @Get()

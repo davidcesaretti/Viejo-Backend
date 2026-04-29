@@ -1,4 +1,4 @@
-import { IsNumber, IsString, Max, Min, MinLength } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 
 export class CreateSaleItemDto {
   @IsString()
@@ -10,6 +10,10 @@ export class CreateSaleItemDto {
   @IsString()
   @MinLength(1, { message: 'El nombre del producto es requerido' })
   productName: string;
+
+  @IsOptional()
+  @IsString()
+  variantName?: string;
 
   @IsNumber()
   @Min(0.01, { message: 'La cantidad debe ser mayor a 0' })

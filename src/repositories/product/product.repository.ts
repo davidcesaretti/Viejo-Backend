@@ -9,10 +9,12 @@ import { Product, ProductDocument } from './product.schema';
 
 export interface CreateProductData {
   name: string;
+  variants?: string[];
 }
 
 export interface UpdateProductData {
   name?: string;
+  variants?: string[];
 }
 
 export interface ProductListResult {
@@ -37,7 +39,10 @@ export class ProductRepository {
     if (existing) {
       throw new ConflictException('Ya existe un producto con ese nombre');
     }
-    const product = new this.productModel(data);
+    const product = new this.productModel({
+      name: data.name,
+      variants: data.variants ?? [],
+    });
     return product.save();
   }
 

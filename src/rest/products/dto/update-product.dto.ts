@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateProductDto {
   @IsOptional()
@@ -7,4 +7,9 @@ export class UpdateProductDto {
     message: 'El nombre del producto debe tener al menos 1 carácter',
   })
   name?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  variants?: string[];
 }

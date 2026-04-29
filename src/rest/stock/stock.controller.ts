@@ -25,18 +25,29 @@ export class StockController {
   @Post()
   @Roles(Role.Vendedor, Role.Administrador)
   create(@Body() dto: CreateStockDto) {
-    return this.stockService.create(dto);
+    return this.stockService.create({
+      productId: dto.productId,
+      quantity: dto.quantity,
+      price: dto.price,
+      discount: dto.discount,
+      variantName: dto.variantName,
+    });
   }
 
   @Get()
   @Roles(Role.Vendedor, Role.Administrador)
-  findAll(@Query('page') pageStr?: string, @Query('limit') limitStr?: string) {
+  findAll(
+    @Query('page') pageStr?: string,
+    @Query('limit') limitStr?: string,
+    @Query('available') availableStr?: string,
+  ) {
     const page = Math.max(1, parseInt(pageStr ?? '1', 10) || 1);
     const limit = Math.min(
       50,
       Math.max(1, parseInt(limitStr ?? '20', 10) || 20),
     );
-    return this.stockService.findAll(page, limit);
+    const onlyAvailable = availableStr === 'true' || availableStr === '1';
+    return this.stockService.findAll(page, limit, onlyAvailable);
   }
 
   @Get('product/:productId')
@@ -45,13 +56,20 @@ export class StockController {
     @Param('productId') productId: string,
     @Query('page') pageStr?: string,
     @Query('limit') limitStr?: string,
+    @Query('available') availableStr?: string,
   ) {
     const page = Math.max(1, parseInt(pageStr ?? '1', 10) || 1);
     const limit = Math.min(
       50,
       Math.max(1, parseInt(limitStr ?? '20', 10) || 20),
     );
-    return this.stockService.findByProductId(productId, page, limit);
+    const onlyAvailable = availableStr === 'true' || availableStr === '1';
+    return this.stockService.findByProductId(
+      productId,
+      page,
+      limit,
+      onlyAvailable,
+    );
   }
 
   @Get(':id')
@@ -63,7 +81,12 @@ export class StockController {
   @Patch(':id')
   @Roles(Role.Vendedor, Role.Administrador)
   update(@Param('id') id: string, @Body() dto: UpdateStockDto) {
-    return this.stockService.update(id, dto);
+    return this.stockService.update(id, {
+      quantity: dto.quantity,
+      price: dto.price,
+      discount: dto.discount,
+      variantName: dto.variantName,
+    });
   }
 
   @Delete(':id')

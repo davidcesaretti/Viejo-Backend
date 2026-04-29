@@ -6,6 +6,7 @@ import type { ProductListResult } from '../../repositories/product/product.repos
 export interface ProductResponse {
   id: string;
   name: string;
+  variants: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -14,7 +15,7 @@ export interface ProductResponse {
 export class ProductsService {
   constructor(private readonly productRepository: ProductRepository) {}
 
-  async create(dto: { name: string }): Promise<ProductResponse> {
+  async create(dto: { name: string; variants?: string[] }): Promise<ProductResponse> {
     const product = await this.productRepository.create(dto);
     return this.toResponse(product);
   }
@@ -35,7 +36,7 @@ export class ProductsService {
     return this.toResponse(product);
   }
 
-  async update(id: string, dto: { name?: string }): Promise<ProductResponse> {
+  async update(id: string, dto: { name?: string; variants?: string[] }): Promise<ProductResponse> {
     const product = await this.productRepository.update(id, dto);
     return this.toResponse(product);
   }
@@ -50,6 +51,7 @@ export class ProductsService {
     return {
       id: product._id.toString(),
       name: product.name,
+      variants: product.variants ?? [],
       createdAt:
         createdAt instanceof Date
           ? createdAt.toISOString()

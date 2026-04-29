@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Schema as MongooseSchema } from 'mongoose';
-import { Sale, SaleDocument, SaleItem } from './sale.schema';
+import { Model, Types } from 'mongoose';
+import type { ClientSession } from 'mongoose';
+import { Sale, SaleDocument } from './sale.schema';
 
 export interface SaleItemData {
   productId: string;
   stockId: string;
   productName: string;
+  variantName?: string;
   quantity: number;
   unitPrice: number;
   discountPercent?: number;
@@ -36,14 +38,15 @@ export class SaleRepository {
     private readonly saleModel: Model<SaleDocument>,
   ) {}
 
-  async create(data: CreateSaleData): Promise<SaleDocument> {
+  async create(data: CreateSaleData, session?: ClientSession): Promise<SaleDocument> {
     const sale = new this.saleModel({
-      clientId: new MongooseSchema.Types.ObjectId(data.clientId),
+      clientId: new Types.ObjectId(data.clientId),
       saleDate: data.saleDate ?? new Date(),
       items: data.items.map((item) => ({
-        productId: new MongooseSchema.Types.ObjectId(item.productId),
-        stockId: new MongooseSchema.Types.ObjectId(item.stockId),
+        productId: new Types.ObjectId(item.productId),
+        stockId: new Types.ObjectId(item.stockId),
         productName: item.productName,
+        variantName: item.variantName ?? '',
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         discountPercent: item.discountPercent ?? 0,
@@ -53,7 +56,7 @@ export class SaleRepository {
       amountPaid: 0,
       notes: data.notes ?? '',
     });
-    return sale.save();
+    return sale.save({ session });
   }
 
   async findById(id: string): Promise<SaleDocument> {
@@ -67,24 +70,77 @@ export class SaleRepository {
     return sale;
   }
 
+  async findAllForExport(
+    clientId?: string,
+    dateFrom?: Date,
+    dateTo?: Date,
+  ): Promise<SaleDocument[]> {
+    const filter: Record<string, unknown> = {};
+    if (clientId) filter.clientId = clientId;
+    if (dateFrom || dateTo) {
+      const df: Record<string, Date> = {};
+      if (dateFrom) df.$gte = dateFrom;
+      if (dateTo) df.$lte = dateTo;
+      filter.saleDate = df;
+    }
+    return this.saleModel
+      .find(filter)
+      .populate('clientId', 'name email')
+      .sort({ saleDate: -1 })
+      .limit(10000)
+      .exec();
+  }
+
+  async findAll(
+    page = 1,
+    limit = 30,
+    clientId?: string,
+    dateFrom?: Date,
+    dateTo?: Date,
+  ): Promise<SaleListResult> {
+    const skip = (page - 1) * limit;
+    const filter: Record<string, unknown> = {};
+    if (clientId) filter.clientId = clientId;
+    if (dateFrom || dateTo) {
+      const dateFilter: Record<string, Date> = {};
+      if (dateFrom) dateFilter.$gte = dateFrom;
+      if (dateTo) dateFilter.$lte = dateTo;
+      filter.saleDate = dateFilter;
+    }
+    const [items, total] = await Promise.all([
+      this.saleModel
+        .find(filter)
+        .populate('clientId', 'name email')
+        .sort({ saleDate: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.saleModel.countDocuments(filter).exec(),
+    ]);
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
+  }
+
   async findByClientId(
     clientId: string,
     page = 1,
     limit = 20,
   ): Promise<SaleListResult> {
     const skip = (page - 1) * limit;
+    const filter = { clientId } as Record<string, unknown>;
     const [items, total] = await Promise.all([
       this.saleModel
-        .find({ clientId: new MongooseSchema.Types.ObjectId(clientId) })
+        .find(filter)
         .sort({ saleDate: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.saleModel
-        .countDocuments({
-          clientId: new MongooseSchema.Types.ObjectId(clientId),
-        })
-        .exec(),
+      this.saleModel.countDocuments(filter).exec(),
     ]);
     return {
       items,

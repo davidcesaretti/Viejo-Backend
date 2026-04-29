@@ -17,4 +17,8 @@ export class CreateStockDto {
   @Min(0, { message: 'El descuento debe ser mayor o igual a 0' })
   @Max(100, { message: 'El descuento no puede ser mayor a 100' })
   discount?: number;
+
+  @IsOptional()
+  @IsString()
+  variantName?: string;
 }

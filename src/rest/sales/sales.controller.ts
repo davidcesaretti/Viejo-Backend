@@ -28,25 +28,53 @@ export class SalesController {
       items: dto.items,
       totalAmount: dto.totalAmount,
       notes: dto.notes,
+      initialPayment: dto.initialPayment
+        ? {
+            amount: dto.initialPayment.amount,
+            paymentMethod: dto.initialPayment.paymentMethod,
+            items: dto.initialPayment.items,
+            notes: dto.initialPayment.notes,
+          }
+        : undefined,
     });
   }
 
   @Get()
   @Roles(Role.Vendedor, Role.Administrador)
-  findByClient(
-    @Query('clientId') clientId: string,
+  findAll(
+    @Query('clientId') clientId?: string,
     @Query('page') pageStr?: string,
     @Query('limit') limitStr?: string,
+    @Query('dateFrom') dateFromStr?: string,
+    @Query('dateTo') dateToStr?: string,
   ) {
-    if (!clientId) {
-      return { items: [], total: 0, page: 1, limit: 20, totalPages: 0 };
-    }
     const page = Math.max(1, parseInt(pageStr ?? '1', 10) || 1);
     const limit = Math.min(
       50,
-      Math.max(1, parseInt(limitStr ?? '20', 10) || 20),
+      Math.max(1, parseInt(limitStr ?? '30', 10) || 30),
     );
-    return this.salesService.findByClientId(clientId, page, limit);
+    // dateFrom = start of that day (00:00:00), dateTo = end of that day (23:59:59)
+    const dateFrom = dateFromStr ? new Date(`${dateFromStr}T00:00:00.000Z`) : undefined;
+    const dateTo = dateToStr ? new Date(`${dateToStr}T23:59:59.999Z`) : undefined;
+    return this.salesService.findAll(
+      page,
+      limit,
+      clientId || undefined,
+      dateFrom,
+      dateTo,
+    );
+  }
+
+  @Get('export')
+  @Roles(Role.Vendedor, Role.Administrador)
+  exportAll(
+    @Query('clientId') clientId?: string,
+    @Query('dateFrom') dateFromStr?: string,
+    @Query('dateTo') dateToStr?: string,
+  ) {
+    const dateFrom = dateFromStr ? new Date(`${dateFromStr}T00:00:00.000Z`) : undefined;
+    const dateTo = dateToStr ? new Date(`${dateToStr}T23:59:59.999Z`) : undefined;
+    return this.salesService.exportAll(clientId || undefined, dateFrom, dateTo);
   }
 
   @Get(':id')

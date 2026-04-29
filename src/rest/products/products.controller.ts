@@ -25,7 +25,7 @@ export class ProductsController {
   @Post()
   @Roles(Role.Vendedor, Role.Administrador)
   create(@Body() dto: CreateProductDto) {
-    return this.productsService.create(dto);
+    return this.productsService.create({ name: dto.name, variants: dto.variants });
   }
 
   @Get()
@@ -48,7 +48,7 @@ export class ProductsController {
   @Patch(':id')
   @Roles(Role.Vendedor, Role.Administrador)
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
-    return this.productsService.update(id, dto);
+    return this.productsService.update(id, { name: dto.name, variants: dto.variants });
   }
 
   @Delete(':id')

@@ -15,6 +15,9 @@ export class SaleItem {
   @Prop({ required: true })
   productName: string;
 
+  @Prop({ default: '' })
+  variantName: string;
+
   @Prop({ required: true, min: 0 })
   quantity: number;
 

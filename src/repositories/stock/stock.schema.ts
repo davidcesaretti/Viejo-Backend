@@ -22,6 +22,10 @@ export class Stock {
 
   @Prop({ default: 0, min: 0, max: 100 })
   discount?: number;
+
+  /** Variante asignada a este lote (ej. "Chica", "1L"). Vacío si el producto no tiene variantes. */
+  @Prop({ default: '' })
+  variantName: string;
 }
 
 export const StockSchema = SchemaFactory.createForClass(Stock);
